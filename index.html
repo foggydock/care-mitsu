@@ -216,14 +216,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPA_URL = 'https://kzwshecndzozwcevwtuu.supabase.co';
 const SUPA_KEY = 'sb_publishable_p0flyl16ZkMTwnBp6xmhWw_060Z5fUi';
 
-// EmailJS（公開キーが未設定の間はメール送信をスキップする）
-// 宛先はここに書かない。EmailJS のテンプレート側で設定すること。
-// （このファイルは公開されるため、メールアドレスを含めない）
-const EMAILJS = {
-  publicKey : 'Nq7Z-0oBqca1tWGvp',   // EmailJS 管理画面 Account の Public Key
-  serviceId : 'service_h9s83qs',
-  templateId: 'template_8a0vlkj',
-};
+// メール送信の鍵はこのファイルに置かない。
+// 送信は Supabase の Edge Function「care-notify」が代わりに行う。
+// 鍵はサーバー側の環境変数にあり、公開ページからは読めない。
 
 const sb = createClient(SUPA_URL, SUPA_KEY);
 
@@ -401,29 +396,17 @@ async function saveMood(){
 // ───────── 通知 ─────────
 async function notify(date){
   if (sent.has(date)) return;
-  if (!EMAILJS.publicKey){
-    console.warn('EmailJSの公開キーが未設定のため、メールは送っていません');
-    return;
-  }
   try{
-    const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        service_id: EMAILJS.serviceId, template_id: EMAILJS.templateId,
-        user_id: EMAILJS.publicKey,
-        template_params:{
-          subject: '[ケアミツー] 生理が始まりました',
-          message: `${date.replace(/-/g,'/')} から生理が始まりました。\n\n`
-                 + `体調・気分のサポートを意識してあげてください。`,
-        }})});
-    if (!r.ok) throw new Error(`EmailJS ${r.status} ${await r.text()}`);
-    await sb.from('care_notifications').insert({kind:'period_start', ref_date:date});
+    // 送信はサーバー側（Edge Function）。二重送信の判定と記録も向こうで行う
+    const { data, error } = await sb.functions.invoke('care-notify', { body:{ date } });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
     sent.add(date);
   }catch(e){ fail('お知らせメールの送信', e); }
 }
 // 送信もれがあれば、開いたときに送り直す
 async function retryNotify(){
-  if (!EMAILJS.publicKey || !periods.length) return;
+  if (!periods.length) return;
   const last = periods[periods.length-1];
   if (!sent.has(last) && diff(last, TODAY) <= 3) await notify(last);
 }
