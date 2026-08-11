@@ -203,7 +203,8 @@ textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-rad
   </section>
 
   <p class="foot">
-    <span id="who"></span> ／ <button id="out">ログアウト</button>
+    <span id="who"></span> ／ <button id="out">ログアウト</button><span
+      id="testWrap" class="hide"> ／ <button id="testMail">通知テスト</button></span>
   </p>
 </div>
 <div class="toast" id="toast"></div>
@@ -316,6 +317,17 @@ $('#gGoogle').onclick = async () => {
 };
 $('#out').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
+// 通知が生きているか、いつでも確かめられるようにしておく（岡野さん側のみ）
+$('#testMail').onclick = async () => {
+  toast('送信中…');
+  try{
+    const { data, error } = await sb.functions.invoke('care-notify', { body:{ test:true } });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    toast('テストメールを送りました');
+  }catch(e){ fail('テスト送信', e); }
+};
+
 // ───────── 読み込み ─────────
 async function load(){
   const [p, m, n] = await Promise.all([
@@ -413,7 +425,8 @@ async function retryNotify(){
 
 // ───────── 描画 ─────────
 function render(){ status(); hero(); logSection(); hints(); calendar(); history();
-  $('#who').textContent = user?.email || ''; }
+  $('#who').textContent = user?.email || '';
+  $('#testWrap').classList.toggle('hide', role !== 'hus'); }
 
 function status(){
   const c = current();
