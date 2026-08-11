@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ケアミツー</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d94f70">
+<style>
+:root{
+  --bg:#faf7f5; --card:#fff; --ink:#2c2622; --sub:#8a7f78; --line:#ece5e0;
+  --accent:#d94f70; --radius:18px;
+  --p-menstrual:#e11d48; --p-follicular:#0d9488; --p-ovulation:#0284c7;
+  --p-luteal:#7c5cd6; --p-pms:#e07a1f;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#191614; --card:#241f1d; --ink:#f0e9e5; --sub:#a2958d; --line:#372f2c; }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  line-height:1.65; padding-bottom:40px}
+.wrap{max-width:460px; margin:0 auto; padding:0 16px}
+
+header{display:flex; align-items:center; justify-content:space-between; padding:18px 0 12px}
+h1{font-size:17px; margin:0; letter-spacing:.04em; font-weight:700}
+.roles{display:flex; background:var(--line); border-radius:999px; padding:3px; gap:2px}
+.roles button{border:0; background:transparent; color:var(--sub); font-size:12.5px;
+  padding:6px 13px; border-radius:999px; cursor:pointer; font-weight:600; font-family:inherit}
+.roles button[aria-selected="true"]{background:var(--card); color:var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+.status{background:var(--card); border-radius:var(--radius); padding:22px 20px;
+  box-shadow:0 2px 14px rgba(0,0,0,.05); position:relative; overflow:hidden}
+.status::before{content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--pc,var(--line))}
+.day{font-size:13px; color:var(--sub); font-weight:600; letter-spacing:.06em}
+.phase{font-size:27px; font-weight:800; margin:2px 0 4px; color:var(--pc); letter-spacing:.02em}
+.phase-note{font-size:13.5px; color:var(--sub)}
+.next{margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+  font-size:13.5px; display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+.next b{font-size:16px; font-weight:700; text-align:right}
+
+.hero{display:block; width:100%; margin:14px 0 6px; border:0; cursor:pointer;
+  background:var(--accent); color:#fff; font-family:inherit;
+  font-size:17px; font-weight:700; padding:19px; border-radius:var(--radius);
+  box-shadow:0 4px 16px rgba(217,79,112,.32); transition:transform .12s}
+.hero:active{transform:scale(.985)}
+.hero small{display:block; font-size:12px; font-weight:500; opacity:.85; margin-top:3px}
+.hero[data-done="1"]{background:var(--card); color:var(--sub);
+  box-shadow:none; border:1.5px solid var(--line); font-size:14.5px}
+
+section{margin-top:26px}
+h2{font-size:13px; color:var(--sub); margin:0 0 10px; font-weight:700; letter-spacing:.08em}
+.card{background:var(--card); border-radius:var(--radius); padding:18px;
+  box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.muted{color:var(--sub); font-size:13px}
+
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{border:1.5px solid var(--line); background:transparent; color:var(--ink);
+  border-radius:999px; padding:9px 15px; font-size:14px; cursor:pointer;
+  font-family:inherit; transition:.15s}
+.chip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#fff}
+.chip.top{font-weight:700}
+.moods{display:flex; gap:7px; margin-top:14px}
+.moodbtn{flex:1; border:1.5px solid var(--line); background:transparent; cursor:pointer;
+  border-radius:13px; padding:10px 2px; font-family:inherit; color:var(--ink)}
+.moodbtn span{display:block; font-size:21px; line-height:1.3}
+.moodbtn small{font-size:10.5px; color:var(--sub)}
+.moodbtn[aria-pressed="true"]{border-color:var(--accent); background:rgba(217,79,112,.09)}
+.moodbtn[aria-pressed="true"] small{color:var(--accent); font-weight:700}
+textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-radius:12px;
+  padding:11px; font-family:inherit; font-size:14px; background:transparent;
+  color:var(--ink); resize:vertical; min-height:52px}
+.save{width:100%; margin-top:12px; border:0; background:var(--ink); color:var(--bg);
+  padding:13px; border-radius:12px; font-size:14.5px; font-weight:700;
+  cursor:pointer; font-family:inherit}
+.save:disabled{opacity:.35; cursor:default}
+
+.hint{font-size:15px; line-height:1.8}
+.hint + .hint{margin-top:12px; padding-top:12px; border-top:1px solid var(--line)}
+.tag{display:inline-block; font-size:10.5px; font-weight:700; color:var(--pc);
+  border:1px solid var(--pc); border-radius:5px; padding:1px 6px; margin-right:7px;
+  vertical-align:2px; letter-spacing:.04em}
+
+.cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.cal-head button{border:0; background:transparent; color:var(--sub); font-size:19px;
+  cursor:pointer; padding:2px 12px; font-family:inherit}
+.cal-head strong{font-size:14.5px}
+.grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px}
+.dow{text-align:center; font-size:10.5px; color:var(--sub); padding-bottom:5px; font-weight:600}
+.cell{aspect-ratio:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; font-size:13px; border-radius:10px; position:relative;
+  border:0; background:transparent; color:var(--ink); font-family:inherit; cursor:pointer}
+.cell.other{opacity:.22}
+.cell.future{opacity:.4; cursor:default}
+.cell.today{outline:2px solid var(--ink); outline-offset:-2px; font-weight:800}
+.cell.start{background:var(--p-menstrual); color:#fff; font-weight:800}
+.cell.pred{border:1.5px dashed var(--p-menstrual); color:var(--p-menstrual)}
+.cell.sel{outline:2.5px solid var(--accent); outline-offset:-2px}
+.dot{width:4px; height:4px; border-radius:50%; background:var(--sub); margin-top:2px}
+.cell.start .dot{background:#fff}
+.legend{display:flex; gap:14px; margin-top:12px; font-size:11.5px; color:var(--sub); flex-wrap:wrap}
+.legend i{width:9px; height:9px; border-radius:3px; display:inline-block; margin-right:5px; vertical-align:-1px}
+
+.daypanel{margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+.daypanel .t{font-size:14px; font-weight:700; margin-bottom:10px}
+.dayact{width:100%; border:1.5px solid var(--line); background:transparent; color:var(--ink);
+  padding:11px; border-radius:12px; font-size:14px; font-family:inherit; cursor:pointer; margin-top:8px}
+.dayact.on{border-color:var(--p-menstrual); color:var(--p-menstrual); font-weight:700}
+
+.row{display:flex; justify-content:space-between; align-items:center; font-size:14px;
+  padding:11px 0; border-bottom:1px solid var(--line); gap:10px}
+.row:last-child{border:0}
+.row .len{font-size:12.5px; color:var(--sub); font-variant-numeric:tabular-nums; white-space:nowrap}
+.sym{font-size:12px; color:var(--sub)}
+
+/* ログイン */
+.gate{max-width:340px; margin:14vh auto; padding:0 20px; text-align:center}
+.gate h1{font-size:24px; margin-bottom:6px}
+.gate p{color:var(--sub); font-size:13.5px; margin-top:0}
+.gate input{width:100%; margin-top:10px; padding:14px; font-size:16px; font-family:inherit;
+  border:1.5px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink)}
+.gate button{width:100%; margin-top:14px; padding:14px; border:0; border-radius:12px;
+  background:var(--accent); color:#fff; font-size:15.5px; font-weight:700;
+  cursor:pointer; font-family:inherit}
+.gate .alt{background:transparent; color:var(--sub); font-size:13px; font-weight:600; margin-top:8px}
+.err{color:#dc2626; font-size:13px; margin-top:12px; min-height:20px; line-height:1.5}
+
+.toast{position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--bg); padding:12px 22px; border-radius:999px;
+  font-size:14px; font-weight:600; opacity:0; transition:.25s; pointer-events:none; z-index:9;
+  max-width:90vw; text-align:center}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.bad{background:#dc2626; color:#fff}
+.hide{display:none !important}
+.foot{font-size:11.5px; color:var(--sub); text-align:center; margin-top:28px;
+  padding-top:16px; border-top:1px solid var(--line)}
+.foot button{border:0; background:transparent; color:var(--sub); font-size:11.5px;
+  text-decoration:underline; cursor:pointer; font-family:inherit}
+.spin{text-align:center; padding:40px; color:var(--sub); font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- ログイン -->
+<div id="gate" class="gate hide">
+  <h1>ケアミツー</h1>
+  <p>家計簿アプリと同じ Google アカウントで入れます</p>
+  <button id="gGoogle">Google でログイン</button>
+  <div class="err" id="gErr"></div>
+</div>
+
+<div id="loading" class="spin">読み込み中…</div>
+
+<!-- 本体 -->
+<div class="wrap hide" id="app">
+  <header>
+    <h1>ケアミツー</h1>
+    <div class="roles" role="tablist">
+      <button id="rWife" role="tab" aria-selected="true">妻</button>
+      <button id="rHus"  role="tab" aria-selected="false">岡野さん</button>
+    </div>
+  </header>
+
+  <div class="status" id="status"></div>
+  <button class="hero" id="hero"></button>
+
+  <section id="secLog">
+    <h2 id="logHead">今日の体調（任意）</h2>
+    <div class="card">
+      <div class="chips" id="chips"></div>
+      <div class="moods" id="moods"></div>
+      <textarea id="notes" placeholder="メモ（書かなくてOK）"></textarea>
+      <button class="save" id="save" disabled>保存する</button>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="hintHead">今日のヒント</h2>
+    <div class="card" id="hints"></div>
+  </section>
+
+  <section>
+    <h2>カレンダー</h2>
+    <div class="card">
+      <div class="cal-head">
+        <button id="prev">‹</button><strong id="calLabel"></strong><button id="next">›</button>
+      </div>
+      <div class="grid" id="dow"></div>
+      <div class="grid" id="cal"></div>
+      <div class="legend">
+        <span><i style="background:var(--p-menstrual)"></i>生理開始</span>
+        <span><i style="border:1.5px dashed var(--p-menstrual)"></i>次回予測</span>
+        <span><i style="background:var(--sub)"></i>体調の記録</span>
+      </div>
+      <div class="daypanel hide" id="daypanel"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>これまでの周期</h2>
+    <div class="card" id="history"></div>
+  </section>
+
+  <p class="foot">
+    <span id="who"></span> ／ <button id="out">ログアウト</button>
+  </p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ───────── 設定 ─────────
+// 家計簿と同じプロジェクト。妻がすでに Google ログインを使えるため。
+const SUPA_URL = 'https://kzwshecndzozwcevwtuu.supabase.co';
+const SUPA_KEY = 'sb_publishable_p0flyl16ZkMTwnBp6xmhWw_060Z5fUi';
+
+// EmailJS（公開キーが未設定の間はメール送信をスキップする）
+// 宛先はここに書かない。EmailJS のテンプレート側で設定すること。
+// （このファイルは公開されるため、メールアドレスを含めない）
+const EMAILJS = {
+  publicKey : '',                 // ← EmailJSの管理画面 Account の Public Key
+  serviceId : 'service_h9s83qs',
+  templateId: 'template_8a0vlkj',
+};
+
+const sb = createClient(SUPA_URL, SUPA_KEY);
+
+// ───────── マスタ ─────────
+const SYMPTOMS = [
+  {k:'cramps',     l:'お腹の痛み', top:true},
+  {k:'headache',   l:'頭痛',       top:true},
+  {k:'swelling',   l:'むくみ'},
+  {k:'drowsiness', l:'眠気・だるさ'},
+  {k:'bloating',   l:'お腹の張り'},
+];
+const MOODS = [
+  {k:'good',e:'🙂',l:'いい'},{k:'normal',e:'😐',l:'ふつう'},{k:'tired',e:'😮‍💨',l:'つかれた'},
+  {k:'sleepy',e:'😴',l:'ねむい'},{k:'irritated',e:'😤',l:'イライラ'},
+];
+const PHASES = {
+  menstrual :{l:'月経期',  c:'var(--p-menstrual)', n:'体を休める時期'},
+  follicular:{l:'卵胞期',  c:'var(--p-follicular)',n:'調子が上がる時期'},
+  ovulation :{l:'排卵期',  c:'var(--p-ovulation)', n:'穏やかな時期'},
+  luteal    :{l:'黄体期',  c:'var(--p-luteal)',    n:'眠気やむくみが出る時期'},
+  pms       :{l:'ゆらぎ期',c:'var(--p-pms)',       n:'心と体が揺れる時期'},
+};
+const HINTS = {
+  menstrual:{wife:['今日は無理せず、ゆっくり過ごしましょう。','お腹を温めると楽になりますよ。',
+    '冷えに気をつけて、暖かい服装を。','鉄分豊富な食事を意識してみて。','疲れを感じたら早めに休んで。'],
+    hus:['お腹を温めると楽になります。湯たんぽや温かい飲み物を勧めてみては。',
+      '鉄分が不足しがち。赤身肉やほうれん草を意識した食事を一緒に。','冷えに注意。温かい服装を意識して。']},
+  follicular:{wife:['肌・気分とも調子が良い時期です。','比較的、体力的にも余裕がある時期です。',
+    '新しいことに挑戦するのに向いている時期です。','肌の調子も良い時期。お気に入りのケアでさらに楽しく。'],
+    hus:['家事を手伝うと喜ばれる時期です。','集中力が高まる時期。何かを始めるなら今が好機。',
+      '思考もクリア。重要な相談事はこの時期にすると話が進みやすい。']},
+  ovulation:{wife:['体温が少し上がる時期。水分補給を意識して。',
+    '軽い腹痛を感じることもあります。気にしすぎないで。','体調が安定する時期。十分な睡眠でケアを。'],
+    hus:['体温が少し上がる時期。冷えすぎ・暑すぎに気をつけて。',
+      '軽い腹痛（中間痛）を感じる人もいます。症状が強いときは無理させないように。','穏やかに過ごせる時期です。']},
+  luteal:{wife:['黄体ホルモンの影響で眠気が出やすくなります。','眠気を感じたら昼寝もOK。自分を労わる時間を。',
+    'むくみやすい時期。塩分控えめを意識してみて。','甘いものが食べたくなる時期。少しご褒美を。'],
+    hus:['塩分を控えるとむくみが軽減されることも。','甘いものが食べたくなる時期です。一緒におやつタイムでも。',
+      '次のゆらぎ期に向けて、無理させないようにケアを。']},
+  pms:{wife:['気分が不安定でも自然なこと。自分を責めないで。','イライラしても大丈夫。深呼吸して、自分のペースで。',
+    'むくみ・頭痛・肌荒れが出やすい時期。'],
+    hus:['ゆらぎ期です。普段以上に思いやりを持って接して。','イライラしやすい時期。受け流す・聞き役に徹するのが◎',
+      '感情が揺れやすい時期。ささいな言動でも傷つくことがあります。',
+      '些細なことで涙が出ることも。理由を求めず寄り添ってあげて。']},
+};
+const KNOWLEDGE = {
+  wife:['自分の周期を知ることは、自分を大切にする第一歩。','十分な睡眠は心と体のバランスを整えます。',
+        '鉄分・カルシウム・マグネシウムは女性に特に大事なミネラルです。'],
+  hus:['生理痛の有無や程度は個人差があります。妻の感じ方を尊重して。',
+       'PMSは医学的にも認められた状態。気のせいではありません。',
+       'ホルモンの変動はライフステージで変わります。長い目で見守って。',
+       '適度な運動はPMS症状の緩和に効果的とされます。']};
+
+// ───────── 道具 ─────────
+const $ = s => document.querySelector(s);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parse = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const diff = (a,b) => Math.round((parse(b)-parse(a))/86400000);
+const TODAY = iso(new Date());
+
+let user = null, role = localStorage.getItem('careMitsu.role') || 'wife';
+let periods = [], moods = {}, sent = new Set(), recordedBy = {};
+let calMonth = new Date(), selDay = TODAY;
+let draft = {symptoms:[], mood:'', notes:''};
+
+function toast(m, bad){
+  const t = $('#toast'); t.textContent = m;
+  t.classList.toggle('bad', !!bad); t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), bad ? 5000 : 2400);
+}
+// エラーは握りつぶさず必ず出す
+function fail(where, e){
+  console.error(where, e);
+  toast(`${where}に失敗しました：${e?.message || e}`, true);
+}
+
+// ───────── 認証 ─────────
+async function init(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ $('#loading').classList.add('hide'); $('#gate').classList.remove('hide'); return; }
+  user = session.user;
+  $('#gate').classList.add('hide');
+  await load();
+  $('#loading').classList.add('hide');
+  $('#app').classList.remove('hide');
+  setRole(role);
+}
+$('#gGoogle').onclick = async () => {
+  $('#gErr').textContent = '';
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: location.origin + location.pathname },
+  });
+  if (error) $('#gErr').textContent = 'ログインに失敗しました：' + error.message;
+};
+$('#out').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ───────── 読み込み ─────────
+async function load(){
+  const [p, m, n] = await Promise.all([
+    sb.from('care_periods').select('date,created_by').order('date'),
+    sb.from('care_moods').select('date,symptoms,mood,notes'),
+    sb.from('care_notifications').select('ref_date').eq('kind','period_start'),
+  ]);
+  if (p.error) return fail('記録の読み込み', p.error);
+  if (m.error) return fail('体調の読み込み', m.error);
+  if (n.error) return fail('通知履歴の読み込み', n.error);
+
+  periods = p.data.map(r => r.date).sort();
+  recordedBy = {}; p.data.forEach(r => recordedBy[r.date] = r.created_by);
+  moods = {}; m.data.forEach(r => moods[r.date] = {
+    symptoms: r.symptoms||[], mood: r.mood||'', notes: r.notes||'' });
+  sent = new Set((n.data||[]).map(r => r.ref_date));
+  selDay = TODAY;
+  loadDraft();
+}
+function loadDraft(){
+  draft = moods[selDay] ? {...moods[selDay], symptoms:[...moods[selDay].symptoms]}
+                        : {symptoms:[], mood:'', notes:''};
+}
+
+// ───────── 周期の計算 ─────────
+function cycleStats(){
+  const gaps = [];
+  for (let i=1; i<periods.length; i++) gaps.push(diff(periods[i-1], periods[i]));
+  const avg = gaps.length ? gaps.reduce((a,b)=>a+b,0)/gaps.length : 28;
+  return {gaps, avg, len: Math.round(avg),
+          min: gaps.length?Math.min(...gaps):null, max: gaps.length?Math.max(...gaps):null};
+}
+function phaseOf(day, len){
+  const ovu = Math.max(8, len - 14);
+  if (day <= 5) return 'menstrual';
+  if (day >= len - 4) return 'pms';
+  if (day >= ovu - 2 && day <= ovu + 2) return 'ovulation';
+  if (day < ovu - 2) return 'follicular';
+  return 'luteal';
+}
+function current(){
+  if (!periods.length) return null;
+  const last = periods[periods.length-1];
+  const {len, avg, min, max} = cycleStats();
+  const day = diff(last, TODAY) + 1;
+  const nd = parse(last); nd.setDate(nd.getDate() + len);
+  return {last, day, len, avg, min, max, phase: phaseOf(Math.min(day,len), len),
+          next: iso(nd), until: diff(TODAY, iso(nd))};
+}
+
+// ───────── 保存 ─────────
+async function setPeriod(date, on){
+  if (on){
+    const { error } = await sb.from('care_periods').insert({date, created_by:user.id});
+    if (error) return fail('生理開始日の記録', error);
+    periods = [...new Set([...periods, date])].sort();
+    recordedBy[date] = user.id;
+    toast('記録しました');
+    notify(date);
+  } else {
+    const { error } = await sb.from('care_periods').delete().eq('date',date);
+    if (error) return fail('取り消し', error);
+    periods = periods.filter(d => d !== date);
+    delete recordedBy[date];
+    toast('取り消しました');
+  }
+  render();
+}
+async function saveMood(){
+  const rec = {date:selDay, symptoms:draft.symptoms, mood:draft.mood,
+               notes:draft.notes, created_by:user.id, updated_at:new Date().toISOString()};
+  const { error } = await sb.from('care_moods').upsert(rec, {onConflict:'date'});
+  if (error) return fail('体調の保存', error);
+  moods[selDay] = {symptoms:[...draft.symptoms], mood:draft.mood, notes:draft.notes};
+  toast('保存しました'); render();
+}
+
+// ───────── 通知 ─────────
+async function notify(date){
+  if (sent.has(date)) return;
+  if (!EMAILJS.publicKey){
+    console.warn('EmailJSの公開キーが未設定のため、メールは送っていません');
+    return;
+  }
+  try{
+    const r = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        service_id: EMAILJS.serviceId, template_id: EMAILJS.templateId,
+        user_id: EMAILJS.publicKey,
+        template_params:{
+          subject: '[ケアミツー] 生理が始まりました',
+          message: `${date.replace(/-/g,'/')} から生理が始まりました。\n\n`
+                 + `体調・気分のサポートを意識してあげてください。`,
+        }})});
+    if (!r.ok) throw new Error(`EmailJS ${r.status} ${await r.text()}`);
+    await sb.from('care_notifications').insert({kind:'period_start', ref_date:date});
+    sent.add(date);
+  }catch(e){ fail('お知らせメールの送信', e); }
+}
+// 送信もれがあれば、開いたときに送り直す
+async function retryNotify(){
+  if (!EMAILJS.publicKey || !periods.length) return;
+  const last = periods[periods.length-1];
+  if (!sent.has(last) && diff(last, TODAY) <= 3) await notify(last);
+}
+
+// ───────── 描画 ─────────
+function render(){ status(); hero(); logSection(); hints(); calendar(); history();
+  $('#who').textContent = user?.email || ''; }
+
+function status(){
+  const c = current();
+  if (!c){ $('#status').innerHTML =
+    '<div class="muted">まだ記録がありません。<br>下のボタンから始めましょう。</div>'; return; }
+  const p = PHASES[c.phase];
+  $('#status').style.setProperty('--pc', p.c);
+  $('#status').innerHTML = `
+    <div class="day">周期 ${c.day} 日目</div>
+    <div class="phase">${p.l}</div>
+    <div class="phase-note">${p.n}</div>
+    <div class="next"><span class="muted">次の生理の予測</span><b>${
+      c.until < 0 ? `予測日を${-c.until}日すぎています`
+      : c.until === 0 ? '今日ごろ'
+      : `${c.next.slice(5).replace('-','/')}・あと${c.until}日`}</b></div>`;
+}
+
+function hero(){
+  const b = $('#hero'), done = periods.includes(TODAY);
+  if (role === 'hus'){
+    const c = current();
+    b.dataset.done = '1'; b.style.cursor = 'default'; b.onclick = null;
+    const by = c && recordedBy[c.last];
+    const whom = !by ? '' : (by === user.id ? '自分で記録' : '妻が記録');
+    b.innerHTML = c
+      ? `前回の生理開始日　${c.last.slice(5).replace('-','/')}<small>${
+          c.day-1===0 ? '今日' : `${c.day-1}日前`}・${whom || '記録済み'}</small>`
+      : 'まだ記録がありません';
+    return;
+  }
+  b.style.cursor = 'pointer';
+  b.dataset.done = done ? '1' : '0';
+  b.innerHTML = done ? '✓ 今日を「生理が始まった日」として記録済み<small>タップで取り消し</small>'
+                     : '生理が始まった<small>今日の日付で記録します</small>';
+  b.onclick = () => setPeriod(TODAY, !done);
+}
+
+function logSection(){
+  $('#secLog').classList.toggle('hide', role !== 'wife');
+  if (role !== 'wife') return;
+  $('#logHead').textContent = selDay === TODAY
+    ? '今日の体調（任意）' : `${selDay.slice(5).replace('-','/')} の体調（任意）`;
+
+  $('#chips').innerHTML = SYMPTOMS.map(s =>
+    `<button class="chip${s.top?' top':''}" data-k="${s.k}"
+      aria-pressed="${draft.symptoms.includes(s.k)}">${s.l}</button>`).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    const k = b.dataset.k;
+    draft.symptoms = draft.symptoms.includes(k)
+      ? draft.symptoms.filter(x=>x!==k) : [...draft.symptoms, k];
+    logSection();
+  });
+  $('#moods').innerHTML = MOODS.map(m =>
+    `<button class="moodbtn" data-k="${m.k}" aria-pressed="${draft.mood===m.k}">
+      <span>${m.e}</span><small>${m.l}</small></button>`).join('');
+  $('#moods').querySelectorAll('.moodbtn').forEach(b => b.onclick = () => {
+    draft.mood = draft.mood === b.dataset.k ? '' : b.dataset.k; logSection();
+  });
+  $('#notes').value = draft.notes;
+  $('#notes').oninput = e => { draft.notes = e.target.value; $('#save').disabled = !dirty(); };
+  $('#save').disabled = !dirty();
+  $('#save').onclick = saveMood;
+}
+function dirty(){
+  const cur = moods[selDay] || {symptoms:[], mood:'', notes:''};
+  const norm = o => JSON.stringify({s:[...o.symptoms].sort(), m:o.mood, n:o.notes.trim()});
+  return norm(cur) !== norm(draft);
+}
+
+function hints(){
+  const c = current();
+  $('#hintHead').textContent = role==='wife' ? '今日のヒント' : '今日のケア';
+  if (!c){ $('#hints').innerHTML = '<div class="muted">記録が貯まるとヒントが出ます。</div>'; return; }
+  const p = PHASES[c.phase], k = role==='wife'?'wife':'hus';
+  const pool = HINTS[c.phase][k], know = KNOWLEDGE[k];
+  const seed = diff(periods[0], TODAY);
+  $('#hints').style.setProperty('--pc', p.c);
+  $('#hints').innerHTML =
+    `<div class="hint"><span class="tag">${p.l}</span>${pool[seed % pool.length]}</div>` +
+    (pool.length>1 ? `<div class="hint"><span class="tag">${p.l}</span>${pool[(seed+1)%pool.length]}</div>` : '') +
+    `<div class="hint muted">${know[seed % know.length]}</div>`;
+}
+
+function calendar(){
+  const y = calMonth.getFullYear(), m = calMonth.getMonth();
+  $('#calLabel').textContent = `${y}年${m+1}月`;
+  $('#dow').innerHTML = ['日','月','火','水','木','金','土'].map(d=>`<div class="dow">${d}</div>`).join('');
+  const c = current();
+  const first = new Date(y, m, 1), start = new Date(first);
+  start.setDate(1 - first.getDay());
+  let html = '';
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const s = iso(d), future = s > TODAY, cls = ['cell'];
+    if (d.getMonth() !== m) cls.push('other');
+    if (future) cls.push('future');
+    if (s === TODAY) cls.push('today');
+    if (periods.includes(s)) cls.push('start');
+    else if (c && s === c.next) cls.push('pred');
+    if (s === selDay) cls.push('sel');
+    html += `<button class="${cls.join(' ')}" data-d="${s}" ${future?'disabled':''}
+      >${d.getDate()}${moods[s]?'<i class="dot"></i>':''}</button>`;
+  }
+  $('#cal').innerHTML = html;
+  $('#cal').querySelectorAll('.cell:not([disabled])').forEach(b => b.onclick = () => {
+    selDay = b.dataset.d; loadDraft(); render();
+    $('#daypanel').scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  $('#prev').onclick = () => { calMonth = new Date(y, m-1, 1); calendar(); };
+  $('#next').onclick = () => { calMonth = new Date(y, m+1, 1); calendar(); };
+  dayPanel();
+}
+
+// 過去の日をさかのぼって記録できるようにする
+function dayPanel(){
+  const el = $('#daypanel');
+  if (role !== 'wife' || selDay === TODAY){ el.classList.add('hide'); return; }
+  el.classList.remove('hide');
+  const on = periods.includes(selDay);
+  el.innerHTML = `<div class="t">${selDay.replace(/-/g,'/')}（${
+    diff(selDay, TODAY)}日前）</div>
+    <button class="dayact ${on?'on':''}" id="dayP">${
+      on ? '✓ 生理開始日として記録済み（タップで取り消し）' : 'この日を生理開始日にする'}</button>
+    <button class="dayact" id="dayT">今日にもどる</button>`;
+  $('#dayP').onclick = () => setPeriod(selDay, !on);
+  $('#dayT').onclick = () => { selDay = TODAY; loadDraft(); render(); };
+}
+
+function history(){
+  if (!periods.length){ $('#history').innerHTML = '<div class="muted">まだありません。</div>'; return; }
+  const {avg,min,max,gaps} = cycleStats();
+  const rows = [...periods].reverse().map((p,i,arr) => {
+    const prev = arr[i+1], g = prev ? diff(prev,p) : null, md = moods[p];
+    const sy = md && md.symptoms.length
+      ? md.symptoms.map(k=>(SYMPTOMS.find(s=>s.k===k)||{}).l).filter(Boolean).join('・') : '';
+    return `<div class="row"><span>${p.replace(/-/g,'/')}${
+      sy?`<br><span class="sym">${sy}</span>`:''}</span>
+      <span class="len">${g?`前回から ${g}日`:''}</span></div>`;
+  }).join('');
+  $('#history').innerHTML = (gaps.length
+    ? `<div class="row"><span class="muted">平均の周期</span>
+       <span class="len"><b>${avg.toFixed(1)}日</b>（${min}〜${max}日）</span></div>` : '') + rows;
+}
+
+$('#rWife').onclick = () => setRole('wife');
+$('#rHus').onclick  = () => setRole('hus');
+function setRole(r){
+  role = r; localStorage.setItem('careMitsu.role', r);
+  $('#rWife').setAttribute('aria-selected', r==='wife');
+  $('#rHus').setAttribute('aria-selected', r==='hus');
+  if (r !== 'wife'){ selDay = TODAY; loadDraft(); }
+  render();
+}
+
+await init();
+if (user) retryNotify();
+</script>
+</body>
+</html>
