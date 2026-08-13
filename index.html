@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ケアミツー</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#d94f70">
+<meta name="theme-color" content="#00b4d8">
 <style>
 :root{
-  --bg:#faf7f5; --card:#fff; --ink:#2c2622; --sub:#8a7f78; --line:#ece5e0;
-  --accent:#d94f70; --radius:18px;
-  --p-menstrual:#e11d48; --p-follicular:#0d9488; --p-ovulation:#0284c7;
-  --p-luteal:#7c5cd6; --p-pms:#e07a1f;
+  --bg:#eaf7fb; --card:#fff; --ink:#123a48; --sub:#5f8b96; --line:#d3ecf1;
+  --accent:#00b4d8; --radius:18px;
+  --p-menstrual:#ff8a7a; --p-follicular:#12b8a6; --p-ovulation:#0ea5e9;
+  --p-luteal:#7c93e0; --p-pms:#ffb43d;
 }
 @media (prefers-color-scheme:dark){
-  :root{ --bg:#191614; --card:#241f1d; --ink:#f0e9e5; --sub:#a2958d; --line:#372f2c; }
+  :root{ --bg:#0c2430; --card:#123644; --ink:#e6f6fa; --sub:#8fc2cf; --line:#1e4a58; }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 body{margin:0; background:var(--bg); color:var(--ink);
@@ -43,7 +43,7 @@ h1{font-size:17px; margin:0; letter-spacing:.04em; font-weight:700}
 .hero{display:block; width:100%; margin:14px 0 6px; border:0; cursor:pointer;
   background:var(--accent); color:#fff; font-family:inherit;
   font-size:17px; font-weight:700; padding:19px; border-radius:var(--radius);
-  box-shadow:0 4px 16px rgba(217,79,112,.32); transition:transform .12s}
+  box-shadow:0 4px 16px rgba(0,180,216,.32); transition:transform .12s}
 .hero:active{transform:scale(.985)}
 .hero small{display:block; font-size:12px; font-weight:500; opacity:.85; margin-top:3px}
 .hero[data-done="1"]{background:var(--card); color:var(--sub);
@@ -66,7 +66,7 @@ h2{font-size:13px; color:var(--sub); margin:0 0 10px; font-weight:700; letter-sp
   border-radius:13px; padding:10px 2px; font-family:inherit; color:var(--ink)}
 .moodbtn span{display:block; font-size:21px; line-height:1.3}
 .moodbtn small{font-size:10.5px; color:var(--sub)}
-.moodbtn[aria-pressed="true"]{border-color:var(--accent); background:rgba(217,79,112,.09)}
+.moodbtn[aria-pressed="true"]{border-color:var(--accent); background:rgba(0,180,216,.10)}
 .moodbtn[aria-pressed="true"] small{color:var(--accent); font-weight:700}
 textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-radius:12px;
   padding:11px; font-family:inherit; font-size:14px; background:transparent;
