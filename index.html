@@ -189,7 +189,7 @@ textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-rad
       <div class="grid" id="dow"></div>
       <div class="grid" id="cal"></div>
       <div class="legend">
-        <span><i style="background:var(--p-menstrual)"></i>生理開始</span>
+        <span><i style="background:var(--p-menstrual)"></i>Period start</span>
         <span><i style="border:1.5px dashed var(--p-menstrual)"></i>次回予測</span>
         <span><i style="background:var(--sub)"></i>体調の記録</span>
       </div>
@@ -236,11 +236,11 @@ const MOODS = [
   {k:'sleepy',e:'😴',l:'ねむい'},{k:'irritated',e:'😤',l:'イライラ'},
 ];
 const PHASES = {
-  menstrual :{l:'月経期',  c:'var(--p-menstrual)', n:'体を休める時期'},
-  follicular:{l:'卵胞期',  c:'var(--p-follicular)',n:'調子が上がる時期'},
-  ovulation :{l:'排卵期',  c:'var(--p-ovulation)', n:'穏やかな時期'},
-  luteal    :{l:'黄体期',  c:'var(--p-luteal)',    n:'眠気やむくみが出る時期'},
-  pms       :{l:'ゆらぎ期',c:'var(--p-pms)',       n:'心と体が揺れる時期'},
+  menstrual :{l:'Menstrual', c:'var(--p-menstrual)', n:'体を休める時期'},
+  follicular:{l:'Follicular',c:'var(--p-follicular)',n:'調子が上がる時期'},
+  ovulation :{l:'Ovulation', c:'var(--p-ovulation)', n:'穏やかな時期'},
+  luteal    :{l:'Luteal',    c:'var(--p-luteal)',    n:'眠気やむくみが出る時期'},
+  pms       :{l:'PMS',       c:'var(--p-pms)',       n:'心と体が揺れる時期'},
 };
 const HINTS = {
   menstrual:{wife:['今日は無理せず、ゆっくり過ごしましょう。','お腹を温めると楽になりますよ。',
@@ -258,17 +258,17 @@ const HINTS = {
   luteal:{wife:['黄体ホルモンの影響で眠気が出やすくなります。','眠気を感じたら昼寝もOK。自分を労わる時間を。',
     'むくみやすい時期。塩分控えめを意識してみて。','甘いものが食べたくなる時期。少しご褒美を。'],
     hus:['塩分を控えるとむくみが軽減されることも。','甘いものが食べたくなる時期です。一緒におやつタイムでも。',
-      '次のゆらぎ期に向けて、無理させないようにケアを。']},
+      '次のPMSに向けて、無理させないようにケアを。']},
   pms:{wife:['気分が不安定でも自然なこと。自分を責めないで。','イライラしても大丈夫。深呼吸して、自分のペースで。',
     'むくみ・頭痛・肌荒れが出やすい時期。'],
-    hus:['ゆらぎ期です。普段以上に思いやりを持って接して。','イライラしやすい時期。受け流す・聞き役に徹するのが◎',
+    hus:['PMSの時期です。普段以上に思いやりを持って接して。','イライラしやすい時期。受け流す・聞き役に徹するのが◎',
       '感情が揺れやすい時期。ささいな言動でも傷つくことがあります。',
       '些細なことで涙が出ることも。理由を求めず寄り添ってあげて。']},
 };
 const KNOWLEDGE = {
   wife:['自分の周期を知ることは、自分を大切にする第一歩。','十分な睡眠は心と体のバランスを整えます。',
         '鉄分・カルシウム・マグネシウムは女性に特に大事なミネラルです。'],
-  hus:['生理痛の有無や程度は個人差があります。妻の感じ方を尊重して。',
+  hus:['Period painの有無や程度は個人差があります。妻の感じ方を尊重して。',
        'PMSは医学的にも認められた状態。気のせいではありません。',
        'ホルモンの変動はライフステージで変わります。長い目で見守って。',
        '適度な運動はPMS症状の緩和に効果的とされます。']};
@@ -382,7 +382,7 @@ function current(){
 async function setPeriod(date, on){
   if (on){
     const { error } = await sb.from('care_periods').insert({date, created_by:user.id});
-    if (error) return fail('生理開始日の記録', error);
+    if (error) return fail('Period startの記録', error);
     periods = [...new Set([...periods, date])].sort();
     recordedBy[date] = user.id;
     toast('記録しました');
@@ -438,7 +438,7 @@ function status(){
     <div class="day">周期 ${c.day} 日目</div>
     <div class="phase">${p.l}</div>
     <div class="phase-note">${p.n}</div>
-    <div class="next"><span class="muted">次の生理の予測</span><b>${
+    <div class="next"><span class="muted">Next periodの予測</span><b>${
       c.until < 0 ? `予測日を${-c.until}日すぎています`
       : c.until === 0 ? '今日ごろ'
       : `${c.next.slice(5).replace('-','/')}・あと${c.until}日`}</b></div>`;
@@ -452,15 +452,15 @@ function hero(){
     const by = c && recordedBy[c.last];
     const whom = !by ? '' : (by === user.id ? '自分で記録' : '妻が記録');
     b.innerHTML = c
-      ? `前回の生理開始日　${c.last.slice(5).replace('-','/')}<small>${
+      ? `Last period start　${c.last.slice(5).replace('-','/')}<small>${
           c.day-1===0 ? '今日' : `${c.day-1}日前`}・${whom || '記録済み'}</small>`
       : 'まだ記録がありません';
     return;
   }
   b.style.cursor = 'pointer';
   b.dataset.done = done ? '1' : '0';
-  b.innerHTML = done ? '✓ 今日を「生理が始まった日」として記録済み<small>タップで取り消し</small>'
-                     : '生理が始まった<small>今日の日付で記録します</small>';
+  b.innerHTML = done ? '✓ 今日を「Period started」として記録済み<small>タップで取り消し</small>'
+                     : 'Period started<small>今日の日付で記録します</small>';
   b.onclick = () => setPeriod(TODAY, !done);
 }
 
@@ -549,7 +549,7 @@ function dayPanel(){
   el.innerHTML = `<div class="t">${selDay.replace(/-/g,'/')}（${
     diff(selDay, TODAY)}日前）</div>
     <button class="dayact ${on?'on':''}" id="dayP">${
-      on ? '✓ 生理開始日として記録済み（タップで取り消し）' : 'この日を生理開始日にする'}</button>
+      on ? '✓ Period startとして記録済み（タップで取り消し）' : 'この日をPeriod startにする'}</button>
     <button class="dayact" id="dayT">今日にもどる</button>`;
   $('#dayP').onclick = () => setPeriod(selDay, !on);
   $('#dayT').onclick = () => { selDay = TODAY; loadDraft(); render(); };
