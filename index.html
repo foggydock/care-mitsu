@@ -138,6 +138,10 @@ textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-rad
 .foot button{border:0; background:transparent; color:var(--sub); font-size:11.5px;
   text-decoration:underline; cursor:pointer; font-family:inherit}
 .spin{text-align:center; padding:40px; color:var(--sub); font-size:14px}
+.quickcard{border:1.5px solid var(--accent)}
+.qtitle{font-size:13.5px; color:var(--sub); margin-bottom:10px; font-weight:600}
+.qclose{display:block; margin-top:12px; border:0; background:transparent; color:var(--sub);
+  font-size:12.5px; text-decoration:underline; cursor:pointer; font-family:inherit}
 </style>
 </head>
 <body>
@@ -164,6 +168,14 @@ textarea{width:100%; margin-top:12px; border:1.5px solid var(--line); border-rad
 
   <div class="status" id="status"></div>
   <button class="hero" id="hero"></button>
+
+  <section id="secQuick" class="hide">
+    <div class="card quickcard">
+      <div class="qtitle">今日の体調は？（記録したらすぐ消えます）</div>
+      <div class="chips" id="qchips"></div>
+      <button class="qclose" id="qClose">あとで／なし</button>
+    </div>
+  </section>
 
   <section id="secLog">
     <h2 id="logHead">今日の体調（任意）</h2>
@@ -284,6 +296,8 @@ let user = null, role = localStorage.getItem('careMitsu.role') || 'wife';
 let periods = [], moods = {}, sent = new Set(), recordedBy = {};
 let calMonth = new Date(), selDay = TODAY;
 let draft = {symptoms:[], mood:'', notes:''};
+let quickPrompt = false;
+const QUICK_SYMPTOMS = SYMPTOMS.filter(s => s.top);
 
 function toast(m, bad){
   const t = $('#toast'); t.textContent = m;
@@ -387,13 +401,27 @@ async function setPeriod(date, on){
     recordedBy[date] = user.id;
     toast('記録しました');
     notify(date);
+    if (date === TODAY) quickPrompt = true;
   } else {
     const { error } = await sb.from('care_periods').delete().eq('date',date);
     if (error) return fail('取り消し', error);
     periods = periods.filter(d => d !== date);
     delete recordedBy[date];
     toast('取り消しました');
+    if (date === TODAY) quickPrompt = false;
   }
+  render();
+}
+async function quickToggle(k){
+  const cur = moods[TODAY] || {symptoms:[], mood:'', notes:''};
+  const symptoms = cur.symptoms.includes(k)
+    ? cur.symptoms.filter(x=>x!==k) : [...cur.symptoms, k];
+  const rec = {date:TODAY, symptoms, mood:cur.mood, notes:cur.notes,
+               created_by:user.id, updated_at:new Date().toISOString()};
+  const { error } = await sb.from('care_moods').upsert(rec, {onConflict:'date'});
+  if (error) return fail('体調の保存', error);
+  moods[TODAY] = {symptoms, mood:cur.mood, notes:cur.notes};
+  if (selDay === TODAY) loadDraft();
   render();
 }
 async function saveMood(){
@@ -402,6 +430,7 @@ async function saveMood(){
   const { error } = await sb.from('care_moods').upsert(rec, {onConflict:'date'});
   if (error) return fail('体調の保存', error);
   moods[selDay] = {symptoms:[...draft.symptoms], mood:draft.mood, notes:draft.notes};
+  if (selDay === TODAY) quickPrompt = false;
   toast('保存しました'); render();
 }
 
@@ -424,9 +453,20 @@ async function retryNotify(){
 }
 
 // ───────── 描画 ─────────
-function render(){ status(); hero(); logSection(); hints(); calendar(); history();
+function render(){ status(); hero(); quickCheck(); logSection(); hints(); calendar(); history();
   $('#who').textContent = user?.email || '';
   $('#testWrap').classList.toggle('hide', role !== 'hus'); }
+
+function quickCheck(){
+  const sec = $('#secQuick');
+  if (role !== 'wife' || !quickPrompt){ sec.classList.add('hide'); return; }
+  sec.classList.remove('hide');
+  const cur = moods[TODAY]?.symptoms || [];
+  $('#qchips').innerHTML = QUICK_SYMPTOMS.map(s =>
+    `<button class="chip top" data-k="${s.k}" aria-pressed="${cur.includes(s.k)}">${s.l}</button>`).join('');
+  $('#qchips').querySelectorAll('.chip').forEach(b => b.onclick = () => quickToggle(b.dataset.k));
+  $('#qClose').onclick = () => { quickPrompt = false; render(); };
+}
 
 function status(){
   const c = current();
